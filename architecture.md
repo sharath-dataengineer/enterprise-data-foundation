@@ -15,35 +15,35 @@ flowchart LR
     subgraph L0["Sources (read-only, Hive on Data Lake)"]
         direction TB
         S1[crm_dwh.*]
-        S2[cc_dwh.*]
+        S2[contact_dwh.*]
         S3[clk_dwh.*]
         S4[eco_mart.*]
         S5[sales_mart.*]
-        S6[ml_reco.*]
+        S6[source_mart.*]
         S7[dim_dwh.*]
     end
-    subgraph L1["Process / Stage — erc_stg, prc_*"]
+    subgraph L1["Process / Stage — staging, staging_*"]
         P1[prc_advisor_clickstream]
-        P2[prc_recommendation_event_flat]
+        P2[staging.offer_event_flat]
         P3[prc_advisor_contact_mapping]
     end
-    subgraph L2["Conformed Dimensions — erc_mart, dim_/cfg_/helper_"]
-        D1[dim_advisor]
-        D2[dim_recommendation]
+    subgraph L2["Conformed Dimensions — analytics_mart, dim_/cfg_/helper_"]
+        D1[dim_agent]
+        D2[dim_offer]
         C1[cfg_pilot_advisors]
         C2[cfg_sales_queue]
         H1[helper_product_map]
         H2[helper_email_conversion]
     end
-    subgraph L3["Facts — erc_mart, fact_*"]
-        F1[fact_advisor_contact_attribute]
-        F2[fact_recommendation_event]
+    subgraph L3["Facts — analytics_mart, fact_*"]
+        F1[fact_agent_activity]
+        F2[fact_offer_event]
         F3[fact_contact_conversion_event]
     end
-    subgraph L4["Reporting — erc_rpt, rpt_*"]
-        R1[rpt_recommendation_funnel_daily]
-        R2[rpt_recommendation_advisor_funnel_daily]
-        R3[rpt_recent_recommendation_response]
+    subgraph L4["Reporting — reporting, rpt_*"]
+        R1[rpt_conversion_funnel_daily]
+        R2[rpt_agent_funnel_daily]
+        R3[rpt_recent_offer_response]
     end
     L0 --> L1 --> L2 --> L3 --> L4
 ```
@@ -73,7 +73,7 @@ sequenceDiagram
     participant S3 as Object Store (S3)
 
     Orq->>Eng: submit <table> (env=prd, region=us)
-    Eng->>Eng: load <table>.conf + <table>_prd.conf + <table>_prd.ssp
+    Eng->>Eng: load <table>.conf + <table>_prd.conf
     Eng->>Cat: read max(updated_ts) from target  (watermark)
     Eng->>Cat: read source tables WHERE updated_ts >= watermark
     Eng->>Eng: run BuildFromSource transform (Spark SQL)
@@ -81,7 +81,7 @@ sequenceDiagram
     Eng->>Eng: MergeUpsert (delta vs history, key=business_key)
     Eng->>S3: write merged partition rundatetime=<ts>
     Eng->>Cat: register/refresh partitions
-    Eng->>Eng: run golden checks (.adapt)
+    Eng->>Eng: run golden checks (DQ manifest)
     Eng-->>Orq: success / fail (blocks downstream on fail)
 ```
 
@@ -112,15 +112,15 @@ The staged delta is merged into a history-preserving target keyed on an explicit
 
 ```mermaid
 flowchart LR
-    SRC[Source incremental<br/>updated_ts >= watermark] --> STG[Staged delta<br/>erc_stg.stg_<table>]
-    TGT[(Target history<br/>erc_mart.<table>)] --> MRG{Merge<br/>key = business_key}
+    SRC[Source incremental<br/>updated_ts >= watermark] --> STG[Staged delta<br/>staging.stg_<table>]
+    TGT[(Target history<br/>analytics_mart.<table>)] --> MRG{Merge<br/>key = business_key}
     STG --> MRG
     MRG -->|matched| UPD[Update in place]
     MRG -->|not matched| INS[Insert new]
     UPD & INS --> OUT[(Write partition<br/>rundatetime=<ts>)]
 ```
 
-Output is partitioned Parquet under `s3://org-erc-processing-<region>-<env>/erc_mart.db/<table>/rundatetime=<ts>/` with **dynamic partition overwrite** (`spark.sql.sources.partitionOverwriteMode=dynamic`), so a re-run replaces only the affected partitions.
+Output is partitioned Parquet under `s3://org-data-processing-<region>-<env>/analytics_mart.db/<table>/rundatetime=<ts>/` with **dynamic partition overwrite** (`spark.sql.sources.partitionOverwriteMode=dynamic`), so a re-run replaces only the affected partitions.
 
 ---
 
@@ -153,7 +153,7 @@ See [`design/funnel-metrics.md`](./design/funnel-metrics.md) for metric definiti
 
 ## 5. Data Quality as a Gate
 
-Every pipeline ships a `.adapt` manifest pointing at **golden-check SQL**. Checks run after the load and return `1` (pass) or `0` (fail); a failure **blocks promotion** of the table to the reporting layer rather than merely logging a warning.
+Every pipeline ships a **DQ manifest** pointing at **golden-check SQL**. Checks run after the load and return `1` (pass) or `0` (fail); a failure **blocks promotion** of the table to the reporting layer rather than merely logging a warning.
 
 | Check type | Question | Example |
 |---|---|---|
@@ -171,11 +171,11 @@ The same transform definition runs for multiple geographies and environments. Re
 
 ```mermaid
 flowchart TB
-    BASE["dim_advisor.conf<br/>(one transform definition)"]
-    BASE --> US["dim_advisor_prd.conf<br/>region=US"]
-    BASE --> CA["dim_advisor_canada_prd.conf<br/>region=CA"]
-    BASE --> UK["dim_advisor_uk_prd.conf<br/>region=UK"]
-    BASE --> ROW["dim_advisor_row_prd.conf<br/>region=ROW"]
+    BASE["dim_agent.conf<br/>(one transform definition)"]
+    BASE --> US["dim_agent_prd.conf<br/>region=US"]
+    BASE --> CA["dim_agent_canada_prd.conf<br/>region=CA"]
+    BASE --> UK["dim_agent_uk_prd.conf<br/>region=UK"]
+    BASE --> ROW["dim_agent_row_prd.conf<br/>region=ROW"]
     US --> E1[dev / e2e / perf / prod bindings]
 ```
 
@@ -185,7 +185,7 @@ Adding a region is a new binding file + DQ validation, not a new pipeline. This 
 
 ## 7. Resource Profiles
 
-Fact pipelines join multi-million-row sources (the sales-booking mart alone is ~12M rows/day), so resource profiles are tuned per pipeline in the env-binding `spark-properties{}` and `.ssp`:
+Fact pipelines join multi-million-row sources (the sales-booking mart alone is ~12M rows/day), so resource profiles are tuned per pipeline in the env-binding `spark-properties{}`:
 
 | Knob | Fact value (illustrative) | Why |
 |---|---|---|

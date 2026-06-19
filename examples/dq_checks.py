@@ -1,5 +1,5 @@
 """
-Golden-check DQ functions — executable reference for dq_checks/dim_advisor.sql.
+Golden-check DQ functions — executable reference for dq_checks/dim_agent.sql.
 
 Each check returns 1 (pass) or 0 (fail), matching the SQL contract. A failing
 check blocks promotion to the reporting layer. Pure Python so the gate logic is

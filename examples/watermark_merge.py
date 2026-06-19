@@ -137,10 +137,10 @@ if __name__ == "__main__":
         .getOrCreate()
     )
 
-    # Example: dim_advisor pipeline config — mirrors examples/pipeline_config/dim_advisor.conf
+    # Example: dim_agent pipeline config — mirrors examples/pipeline_config/dim_agent.conf
     pipeline_config = {
         "source": "source_prod.advisors_raw",
-        "target": "analytics_mart.dim_advisor",
+        "target": "analytics_mart.dim_agent",
         "ts_col": "updated_ts",
         "business_key": ["advisor_id", "data_region"],
         "partition_col": "data_region",

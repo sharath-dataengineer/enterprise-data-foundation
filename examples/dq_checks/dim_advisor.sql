@@ -1,4 +1,4 @@
--- DQ golden checks for dim_advisor
+-- DQ golden checks for dim_agent
 --
 -- Each check returns 1 (pass) or 0 (fail).
 -- A fail blocks promotion to the reporting layer.
@@ -10,7 +10,7 @@ SELECT
     CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END AS check_result
 FROM (
     SELECT advisor_id, data_region, COUNT(*) AS cnt
-    FROM analytics_mart.dim_advisor
+    FROM analytics_mart.dim_agent
     WHERE run_date = CURRENT_DATE
     GROUP BY advisor_id, data_region
     HAVING cnt > 1
@@ -29,7 +29,7 @@ SELECT
         ) = 0 THEN 1
         ELSE 0
     END AS check_result
-FROM analytics_mart.dim_advisor
+FROM analytics_mart.dim_agent
 WHERE run_date = CURRENT_DATE;
 
 -- CHECK: row count reconciliation — target must be within 5% of source active advisors
@@ -40,7 +40,7 @@ SELECT
     END AS check_result
 FROM (
     SELECT
-        (SELECT COUNT(*) FROM analytics_mart.dim_advisor
+        (SELECT COUNT(*) FROM analytics_mart.dim_agent
           WHERE run_date = CURRENT_DATE AND status = 'active')  AS target_count,
         (SELECT COUNT(*) FROM source_prod.advisors_raw
           WHERE status = 'active')                              AS source_count

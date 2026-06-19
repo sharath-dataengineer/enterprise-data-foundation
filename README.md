@@ -60,27 +60,27 @@ flowchart TB
         EMP[(Conformed Dims<br/>employee, division, date)]
     end
 
-    subgraph stage["Stage / Process Layer (erc_stg, prc_*)"]
+    subgraph stage["Stage / Process Layer (staging, staging_*)"]
         WM[Watermark loader<br/>incremental by updated_ts]
         NORM[Normalize + flatten<br/>product mapping, event flatten]
     end
 
-    subgraph dims["Conformed Dimensions (erc_mart, dim_*)"]
-        DE[dim_advisor]
-        DR[dim_recommendation]
+    subgraph dims["Conformed Dimensions (analytics_mart, dim_*)"]
+        DE[dim_agent]
+        DR[dim_offer]
         HLP[helper_* bridges<br/>product map, email conv,<br/>direct sales]
     end
 
-    subgraph facts["Fact Layer (erc_mart, fact_*)"]
-        FA[fact_advisor_contact_attribute<br/>activity grain]
-        FR[fact_recommendation_event<br/>response grain]
+    subgraph facts["Fact Layer (analytics_mart, fact_*)"]
+        FA[fact_agent_activity<br/>activity grain]
+        FR[fact_offer_event<br/>response grain]
         FC[fact_contact_conversion_event<br/>lead→opp→order, 7-day attribution]
     end
 
-    subgraph rpt["Funnel Reporting (erc_mart/erc_rpt, rpt_*)"]
-        RF[rpt_recommendation_funnel_daily]
-        RE[rpt_recommendation_advisor_funnel_daily]
-        RR[rpt_recent_recommendation_response]
+    subgraph rpt["Funnel Reporting (analytics_mart/reporting, rpt_*)"]
+        RF[rpt_conversion_funnel_daily]
+        RE[rpt_agent_funnel_daily]
+        RR[rpt_recent_offer_response]
     end
 
     subgraph dq["Data Quality Gates"]
@@ -114,7 +114,7 @@ The defining decision (see [ADR-001](./adr/001-declarative-config-driven-pipelin
 
 ```hocon
 pipeline {
-  name  = "dim_advisor"
+  name  = "dim_agent"
   steps = [ RegisterUDFs, LoadSourcesWithWatermark, BuildFromSource, MergeUpsert ]
 }
 ```
@@ -125,8 +125,6 @@ Each logical table is materialized as a **three-file set**:
 |---|---|
 | `<name>.conf` | The pipeline definition: steps + the inline Spark SQL transform + merge config. |
 | `<name>_<env>.conf` | Environment binding: includes the shared base, sets `variables{}` (schemas, target table, S3 path) and per-pipeline `spark-properties{}`. |
-| `<name>_<env>.ssp` | Spark session properties (plain `key=value`) for that run. |
-| `<name>.adapt` | Data-quality test manifest pointing at golden-check SQL. |
 
 This is what let one transform definition fan out to **5–6 environments × up to 11 regional variants** without copy-paste. Adding a region is a new binding file, not a new job. See [`examples/`](./examples/) for a complete, anonymized three-file pipeline plus its DQ checks.
 

@@ -40,7 +40,7 @@ candidates AS (
             ORDER BY r.recommendation_ts ASC
         ) AS touch_rank
     FROM bookings b
-    JOIN analytics_mart.fact_recommendation_event r
+    JOIN analytics_mart.fact_offer_event r
         ON  r.company_id     = b.company_id
         AND r.product_family = b.product_family
         AND r.recommendation_status IN ('acted_on', 'lead_created')

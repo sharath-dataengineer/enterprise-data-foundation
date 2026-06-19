@@ -8,9 +8,9 @@ Working reference implementations of the three core patterns used across the 74-
 |------|--------------|
 | [`watermark_merge.py`](./watermark_merge.py) | Watermark-based incremental load + idempotent CDC-style merge upsert — the pattern behind every dim and fact pipeline |
 | [`attribution_7day.sql`](./attribution_7day.sql) | 7-day first-touch attribution query: attribute a booking to the first advisor who made a qualifying recommendation within 7 days, keyed on company + product family |
-| [`pipeline_config/dim_advisor.conf`](./pipeline_config/dim_advisor.conf) | HOCON pipeline definition — the three-file pattern: transform definition (region/env agnostic), environment binding, Spark session properties |
-| [`pipeline_config/dim_advisor_prod.conf`](./pipeline_config/dim_advisor_prod.conf) | Production environment binding — shows how one transform fans out to multiple environments/regions via config, not copied code |
-| [`dq_checks/dim_advisor.sql`](./dq_checks/dim_advisor.sql) | Golden-check DQ manifest: duplicate key check, null check, row count reconciliation — each returns 1 (pass) or 0 (fail), blocking promotion on failure |
+| [`pipeline_config/dim_agent.conf`](./pipeline_config/dim_agent.conf) | HOCON pipeline definition — the three-file pattern: transform definition (region/env agnostic), environment binding, Spark session properties |
+| [`pipeline_config/dim_agent_prod.conf`](./pipeline_config/dim_agent_prod.conf) | Production environment binding — shows how one transform fans out to multiple environments/regions via config, not copied code |
+| [`dq_checks/dim_agent.sql`](./dq_checks/dim_agent.sql) | Golden-check DQ manifest: duplicate key check, null check, row count reconciliation — each returns 1 (pass) or 0 (fail), blocking promotion on failure |
 
 ## The Three-File Pipeline Pattern
 
@@ -20,7 +20,6 @@ Every pipeline follows a three-file structure:
 |------|------|
 | `<table>.conf` | Transform definition — steps, inline SQL, merge config. Region/env agnostic. |
 | `<table>_<env>.conf` | Environment binding — includes the shared transform, sets `variables{}` and `spark-properties{}`. |
-| `<table>_<env>.ssp` | Spark session properties applied at session init. |
 
 Adding a new region is a new binding file. The transform definition is never forked.
 

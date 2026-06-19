@@ -8,7 +8,7 @@ How the Expert Recommendation & Conversion Data Foundation is operated day to da
 
 | Step | What happens | Healthy signal |
 |---|---|---|
-| 1. Source readiness | Orchestrator waits on upstream `prc_*` and source-table partitions | Upstream partitions present for the run date |
+| 1. Source readiness | Orchestrator waits on upstream `staging_*` and source-table partitions | Upstream partitions present for the run date |
 | 2. Dimensions/helpers | `dim_*`, `helper_*`, `cfg_*` build (watermark → merge) | Watermark advances; dup/null checks pass |
 | 3. Facts | `fact_*` build, including 7-day attribution | Reconciliation vs sales mart within tolerance |
 | 4. Reporting | `rpt_*` aggregate from facts | Funnel totals tie to facts |
@@ -62,7 +62,7 @@ How the Expert Recommendation & Conversion Data Foundation is operated day to da
 
 ### Incident 2: Merge key collision after CRM source schema change
 
-**What happened:** The CRM source system added a new market segment, which caused the `employee_id` → `advisor_business_id` join to produce duplicates — two rows per advisor for a 3-day window while the source backfill ran. The `dim_advisor` dup_check (`advisor_key` uniqueness) fired correctly and blocked publish. No incorrect data reached reporting.
+**What happened:** The CRM source system added a new market segment, which caused the `employee_id` → `advisor_business_id` join to produce duplicates — two rows per advisor for a 3-day window while the source backfill ran. The `dim_agent` dup_check (`advisor_key` uniqueness) fired correctly and blocked publish. No incorrect data reached reporting.
 
 **How we found it:** The DQ gate. That's the point. The dup_check returned 0, publish was blocked, on-call was paged.
 

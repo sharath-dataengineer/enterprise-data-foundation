@@ -20,21 +20,21 @@ How seven source systems feed the funnel mart. The point of this document is to 
 
 | Target table | Primary source(s) | Conformance / join logic |
 |---|---|---|
-| `dim_advisor` | `dim_dwh.employee` + `dim_dwh.division` + `cfg_pilot_advisors` | Resolve expert → division; flag trained / incentive-group experts |
-| `dim_recommendation` | `ml_reco.top_recommendations` + `helper_product_map` | Recommendation offer → product family/edition; type = Attach/Retention |
+| `dim_agent` | `dim_dwh.employee` + `dim_dwh.division` + `cfg_pilot_advisors` | Resolve expert → division; flag trained / incentive-group experts |
+| `dim_offer` | `source_mart.top_offers` + `helper_product_map` | Recommendation offer → product family/edition; type = Attach/Retention |
 | `prc_advisor_clickstream` | `clk_dwh.recommendation_ui_events` | Flatten UI event payload to one row per event |
-| `prc_recommendation_event_flat` | CleanEntity recommendation event map | Explode nested response payload to response grain |
-| `fact_recommendation_event` | `prc_recommendation_event_flat` + `dim_recommendation` | Response grain with viewed/clicked/interested flags |
-| `fact_advisor_contact_attribute` | `cc_dwh.contact_standardized` + `dim_advisor` | Activity grain per expert-contact |
+| `staging.offer_event_flat` | CleanEntity recommendation event map | Explode nested response payload to response grain |
+| `fact_offer_event` | `staging.offer_event_flat` + `dim_offer` | Response grain with viewed/clicked/interested flags |
+| `fact_agent_activity` | `contact_dwh.contact_standardized` + `dim_agent` | Activity grain per expert-contact |
 | `fact_contact_conversion_event` | `cc_dwh` + `crm_dwh.lead/opportunity/order` + `sales_mart.sales_booking` + `helper_product_map` | **7-day first-touch attribution** (see below) |
-| `rpt_recommendation_funnel_daily` | the three facts | Pre-aggregate to day × product × region × channel × type |
+| `rpt_conversion_funnel_daily` | the three facts | Pre-aggregate to day × product × region × channel × type |
 
 ## The Attribution Join (conversion fact)
 
 ```mermaid
 flowchart LR
     CC[cc_dwh contact] -->|company+contact| J1
-    REC[fact_recommendation_event] -->|company+contact+product| J1{Join on<br/>company+contact+product}
+    REC[fact_offer_event] -->|company+contact+product| J1{Join on<br/>company+contact+product}
     LEAD[crm_dwh.lead] --> J1
     OPP[crm_dwh.opportunity] --> J1
     ORD[sales_mart.sales_booking] -->|within 7 days| J1

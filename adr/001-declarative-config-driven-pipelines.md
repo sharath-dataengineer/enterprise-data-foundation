@@ -15,8 +15,7 @@ The foundation needed ~74 logical pipelines (process, dimension, helper, fact, r
 Define every pipeline as **HOCON configuration** interpreted at runtime by a single generic Spark pipeline engine. A pipeline is a `name` plus an ordered list of `steps`, where each step binds a step class to properties (source predicates, transform SQL, merge config). Each logical table is materialized as a three-file set:
 
 - `<name>.conf` — the transform + steps (the logic),
-- `<name>_<env>.conf` — environment/region binding (`variables{}`, `spark-properties{}`),
-- `<name>_<env>.ssp` — Spark session properties.
+- `<name>_<env>.conf` — environment/region binding (`variables{}`, `spark-properties{}`).
 
 The transform is written **once**; environment and region are parameters.
 

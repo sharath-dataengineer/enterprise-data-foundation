@@ -11,7 +11,7 @@ These tables feed executive revenue dashboards and per-expert incentive calculat
 
 ## Decision
 
-Every pipeline ships a `.adapt` test manifest pointing at **golden-check SQL** that runs *after* the load. Each check returns `1` (pass) or `0` (fail). A failing check **blocks promotion** of the table to the reporting layer and fails the pipeline, paging the on-call. Three check classes are standard:
+Every pipeline ships a **DQ manifest** pointing at **golden-check SQL** that runs *after* the load. Each check returns `1` (pass) or `0` (fail). A failing check **blocks promotion** of the table to the reporting layer and fails the pipeline, paging the on-call. Three check classes are standard:
 
 - **Duplicate** — business key unique at declared grain (`HAVING count(*) > 1` ⇒ fail).
 - **Null** — required columns populated.
