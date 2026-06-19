@@ -74,13 +74,13 @@ flowchart TB
     subgraph facts["Fact Layer (analytics_mart, fact_*)"]
         FA[fact_agent_activity<br/>activity grain]
         FR[fact_offer_event<br/>response grain]
-        FC[fact_contact_conversion_event<br/>lead→opp→order, 7-day attribution]
+        FC[fact_pipeline_activity<br/>lead→opp→order, 7-day attribution]
     end
 
     subgraph rpt["Funnel Reporting (analytics_mart/reporting, rpt_*)"]
-        RF[rpt_conversion_funnel_daily]
-        RE[rpt_agent_funnel_daily]
-        RR[rpt_recent_offer_response]
+        RF[rpt_daily_performance]
+        RE[rpt_daily_team_metrics]
+        RR[rpt_interaction_summary]
     end
 
     subgraph dq["Data Quality Gates"]

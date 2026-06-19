@@ -26,8 +26,8 @@ How seven source systems feed the funnel mart. The point of this document is to 
 | `staging.offer_event_flat` | CleanEntity recommendation event map | Explode nested response payload to response grain |
 | `fact_offer_event` | `staging.offer_event_flat` + `dim_offer` | Response grain with viewed/clicked/interested flags |
 | `fact_agent_activity` | `contact_dwh.contact_standardized` + `dim_agent` | Activity grain per expert-contact |
-| `fact_contact_conversion_event` | `cc_dwh` + `crm_dwh.lead/opportunity/order` + `sales_mart.sales_booking` + `helper_product_map` | **7-day first-touch attribution** (see below) |
-| `rpt_conversion_funnel_daily` | the three facts | Pre-aggregate to day × product × region × channel × type |
+| `fact_pipeline_activity` | `cc_dwh` + `crm_dwh.lead/opportunity/order` + `sales_mart.sales_booking` + `helper_product_map` | **7-day first-touch attribution** (see below) |
+| `rpt_daily_performance` | the three facts | Pre-aggregate to day × product × region × channel × type |
 
 ## The Attribution Join (conversion fact)
 
@@ -39,7 +39,7 @@ flowchart LR
     OPP[crm_dwh.opportunity] --> J1
     ORD[sales_mart.sales_booking] -->|within 7 days| J1
     J1 --> ATTR[Attribute to first<br/>recommending expert]
-    ATTR --> FC[(fact_contact_conversion_event)]
+    ATTR --> FC[(fact_pipeline_activity)]
 ```
 
 Authority rules:
@@ -49,4 +49,4 @@ Authority rules:
 
 ## Reconciliation
 
-A nightly reconciliation check compares `SUM(units/revenue)` in `fact_contact_conversion_event` against the authoritative `sales_mart` totals (filtered to attributable bookings) within tolerance. A breach blocks the reporting publish ([ADR-004](../adr/004-data-quality-gates.md)).
+A nightly reconciliation check compares `SUM(units/revenue)` in `fact_pipeline_activity` against the authoritative `sales_mart` totals (filtered to attributable bookings) within tolerance. A breach blocks the reporting publish ([ADR-004](../adr/004-data-quality-gates.md)).

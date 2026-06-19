@@ -22,12 +22,12 @@ flowchart LR
     subgraph facts["Facts (analytics_mart)"]
         fact_agent_activity
         fact_offer_event
-        fact_contact_conversion_event
+        fact_pipeline_activity
     end
     subgraph reporting["Reporting (reporting)"]
-        rpt_conversion_funnel_daily
-        rpt_agent_funnel_daily
-        rpt_recent_offer_response
+        rpt_daily_performance
+        rpt_daily_team_metrics
+        rpt_interaction_summary
     end
     stage --> conformed --> facts --> reporting
 ```
@@ -64,14 +64,14 @@ flowchart LR
 |---|---|---|
 | `fact_agent_activity` | one row per expert-contact activity | activity counts |
 | `fact_offer_event` | one row per recommendation response | viewed/clicked/interested flags |
-| `fact_contact_conversion_event` | one row per (company, contact, product, order) | units, revenue, funnel-stage flags |
+| `fact_pipeline_activity` | one row per (company, contact, product, order) | units, revenue, funnel-stage flags |
 
 ### Reporting (`reporting.rpt_*`)
 | Table | Grain | Consumer |
 |---|---|---|
-| `rpt_conversion_funnel_daily` | day × product × region × channel × type | Executive funnel dashboard |
-| `rpt_agent_funnel_daily` | day × expert | Per-expert performance / incentives |
-| `rpt_recent_offer_response` | recent responses | Operational / near-real-time view |
+| `rpt_daily_performance` | day × product × region × channel × type | Executive funnel dashboard |
+| `rpt_daily_team_metrics` | day × expert | Per-expert performance / incentives |
+| `rpt_interaction_summary` | recent responses | Operational / near-real-time view |
 
 ## Conformance Rules
 

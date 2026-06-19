@@ -38,12 +38,12 @@ flowchart LR
     subgraph L3["Facts — analytics_mart, fact_*"]
         F1[fact_agent_activity]
         F2[fact_offer_event]
-        F3[fact_contact_conversion_event]
+        F3[fact_pipeline_activity]
     end
     subgraph L4["Reporting — reporting, rpt_*"]
-        R1[rpt_conversion_funnel_daily]
-        R2[rpt_agent_funnel_daily]
-        R3[rpt_recent_offer_response]
+        R1[rpt_daily_performance]
+        R2[rpt_daily_team_metrics]
+        R3[rpt_interaction_summary]
     end
     L0 --> L1 --> L2 --> L3 --> L4
 ```
@@ -126,7 +126,7 @@ Output is partitioned Parquet under `s3://org-data-processing-<region>-<env>/ana
 
 ## 4. Attribution: the Conversion Fact
 
-`fact_contact_conversion_event` is the analytically hardest table. It answers: *which expert and recommendation get credit for a booked order?*
+`fact_pipeline_activity` is the analytically hardest table. It answers: *which expert and recommendation get credit for a booked order?*
 
 ```mermaid
 flowchart TB
@@ -137,7 +137,7 @@ flowchart TB
     KEY --> WIN{Order books within<br/>7 days of contact?}
     WIN -->|yes| ATTR[Attribute to FIRST<br/>recommending expert]
     WIN -->|no| DROP[Not attributed to the program]
-    ATTR --> F[(fact_contact_conversion_event)]
+    ATTR --> F[(fact_pipeline_activity)]
 ```
 
 Rules encoded in the transform:
