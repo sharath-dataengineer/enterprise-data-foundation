@@ -1,0 +1,6 @@
+# The pipeline examples run on Spark; the attribution/DQ logic is also provided
+# as pure-Python references (attribution.py, dq_checks.py) that need no Spark.
+pyspark>=3.4
+
+# Dev / test
+pytest>=8.0
